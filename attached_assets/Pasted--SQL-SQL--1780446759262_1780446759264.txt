@@ -1,0 +1,318 @@
+هذا هو **SQL الكامل للموقع** وكل شيء **ناقص** بناءً على مقارنة الكود:
+
+---
+
+## SQL الكامل (ملف `supabase-setup.sql`)
+
+```sql
+-- ============================================================
+-- Badr Alden ERP — Supabase SQL Schema
+-- Run this in your Supabase SQL Editor
+-- ============================================================
+
+-- Categories
+CREATE TABLE categories (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  "nameEn" TEXT,
+  description TEXT,
+  "productCount" INTEGER DEFAULT 0
+);
+
+-- Products
+CREATE TABLE products (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  "nameEn" TEXT,
+  sku TEXT NOT NULL,
+  barcode TEXT,
+  "categoryId" INTEGER REFERENCES categories(id) ON DELETE SET NULL,
+  "categoryName" TEXT,
+  "unitPrice" TEXT NOT NULL DEFAULT '0',
+  "costPrice" TEXT NOT NULL DEFAULT '0',
+  stock TEXT NOT NULL DEFAULT '0',
+  "minStock" TEXT NOT NULL DEFAULT '0',
+  unit TEXT NOT NULL DEFAULT 'قطعة',
+  description TEXT,
+  "imageUrl" TEXT
+);
+
+-- Customers
+CREATE TABLE customers (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  phone TEXT NOT NULL,
+  email TEXT,
+  address TEXT,
+  notes TEXT,
+  "totalOrders" INTEGER DEFAULT 0,
+  "totalSpent" REAL DEFAULT 0,
+  balance REAL DEFAULT 0,
+  "loyaltyPoints" INTEGER DEFAULT 0
+);
+
+-- Suppliers
+CREATE TABLE suppliers (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  phone TEXT NOT NULL,
+  email TEXT,
+  address TEXT,
+  "totalOrders" INTEGER DEFAULT 0,
+  "totalPurchased" REAL DEFAULT 0,
+  balance REAL DEFAULT 0
+);
+
+-- Employees
+CREATE TABLE employees (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  position TEXT NOT NULL,
+  department TEXT NOT NULL,
+  salary TEXT NOT NULL,
+  phone TEXT NOT NULL,
+  email TEXT,
+  "hireDate" TEXT,
+  status TEXT DEFAULT 'نشط',
+  "nationalId" TEXT
+);
+
+-- Expenses
+CREATE TABLE expenses (
+  id SERIAL PRIMARY KEY,
+  description TEXT NOT NULL,
+  amount TEXT NOT NULL,
+  category TEXT NOT NULL,
+  date TEXT NOT NULL,
+  "paymentMethod" TEXT NOT NULL,
+  notes TEXT,
+  "createdAt" TEXT
+);
+
+-- Sales (items stored as JSONB)
+CREATE TABLE sales (
+  id SERIAL PRIMARY KEY,
+  "invoiceNumber" TEXT NOT NULL,
+  "customerId" INTEGER REFERENCES customers(id) ON DELETE SET NULL,
+  "customerName" TEXT NOT NULL,
+  "cashierName" TEXT,
+  "invoiceType" TEXT,
+  "deliveryPerson" TEXT,
+  items JSONB NOT NULL DEFAULT '[]',
+  subtotal REAL NOT NULL DEFAULT 0,
+  "discountAmount" REAL NOT NULL DEFAULT 0,
+  total REAL NOT NULL DEFAULT 0,
+  status TEXT NOT NULL DEFAULT 'مكتمل',
+  "paymentMethod" TEXT NOT NULL,
+  notes TEXT,
+  "createdAt" TEXT NOT NULL
+);
+
+-- Purchases (items stored as JSONB)
+CREATE TABLE purchases (
+  id SERIAL PRIMARY KEY,
+  "poNumber" TEXT NOT NULL,
+  "supplierId" INTEGER REFERENCES suppliers(id) ON DELETE SET NULL,
+  "supplierName" TEXT NOT NULL,
+  items JSONB NOT NULL DEFAULT '[]',
+  subtotal REAL NOT NULL DEFAULT 0,
+  total REAL NOT NULL DEFAULT 0,
+  status TEXT NOT NULL DEFAULT 'قيد الانتظار',
+  notes TEXT,
+  received BOOLEAN DEFAULT FALSE,
+  "createdAt" TEXT NOT NULL
+);
+
+-- Returns (lines stored as JSONB)
+CREATE TABLE returns (
+  id SERIAL PRIMARY KEY,
+  "returnNumber" TEXT NOT NULL,
+  "originalSaleId" INTEGER REFERENCES sales(id) ON DELETE SET NULL,
+  "originalInvoiceNumber" TEXT,
+  "customerName" TEXT NOT NULL,
+  items JSONB NOT NULL DEFAULT '[]',
+  subtotal REAL NOT NULL DEFAULT 0,
+  total REAL NOT NULL DEFAULT 0,
+  reason TEXT NOT NULL,
+  "paymentMethod" TEXT NOT NULL,
+  "createdAt" TEXT NOT NULL
+);
+
+-- Accounts (chart of accounts)
+CREATE TABLE accounts (
+  id SERIAL PRIMARY KEY,
+  code TEXT NOT NULL,
+  name TEXT NOT NULL,
+  type TEXT NOT NULL,
+  balance REAL DEFAULT 0,
+  description TEXT
+);
+
+-- Journal entries
+CREATE TABLE journal_entries (
+  id SERIAL PRIMARY KEY,
+  "entryNumber" TEXT NOT NULL,
+  date TEXT NOT NULL,
+  description TEXT NOT NULL,
+  lines JSONB NOT NULL DEFAULT '[]',
+  "totalDebit" REAL NOT NULL DEFAULT 0,
+  "totalCredit" REAL NOT NULL DEFAULT 0
+);
+
+-- Notifications
+CREATE TABLE notifications (
+  id SERIAL PRIMARY KEY,
+  title TEXT NOT NULL,
+  message TEXT NOT NULL,
+  type TEXT NOT NULL,
+  "isRead" BOOLEAN DEFAULT FALSE,
+  "createdAt" TEXT NOT NULL
+);
+
+-- Shifts
+CREATE TABLE shifts (
+  id SERIAL PRIMARY KEY,
+  "cashierName" TEXT NOT NULL,
+  "openingCash" REAL NOT NULL DEFAULT 0,
+  "closingCash" REAL,
+  "totalSales" REAL DEFAULT 0,
+  "totalReturns" REAL DEFAULT 0,
+  "salesCount" INTEGER DEFAULT 0,
+  status TEXT NOT NULL DEFAULT 'نشطة',
+  notes TEXT,
+  "startedAt" TEXT NOT NULL,
+  "endedAt" TEXT
+);
+
+-- Discounts
+CREATE TABLE discounts (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  type TEXT NOT NULL,
+  "isActive" BOOLEAN DEFAULT TRUE,
+  value REAL NOT NULL DEFAULT 0,
+  "valueType" TEXT NOT NULL DEFAULT 'percent',
+  "packageProducts" JSONB DEFAULT '[]',
+  "bulkProductId" INTEGER,
+  "bulkMinQty" INTEGER,
+  "categoryId" INTEGER,
+  "minAmount" REAL,
+  "daysOfWeek" JSONB DEFAULT '[]',
+  "buyN" INTEGER,
+  "getM" INTEGER,
+  description TEXT,
+  "createdAt" TEXT NOT NULL
+);
+
+-- Counters
+CREATE TABLE IF NOT EXISTS counters (
+  name TEXT PRIMARY KEY,
+  value INTEGER NOT NULL DEFAULT 0
+);
+INSERT INTO counters (name, value) VALUES ('invoices', 0), ('purchases', 0), ('returns', 0)
+ON CONFLICT (name) DO NOTHING;
+
+-- Settings
+CREATE TABLE IF NOT EXISTS settings (
+  key TEXT PRIMARY KEY,
+  value JSONB NOT NULL
+);
+
+-- Atomic counter increment function
+CREATE OR REPLACE FUNCTION increment_counter(row_name TEXT)
+RETURNS INTEGER LANGUAGE plpgsql AS $$
+DECLARE new_val INTEGER;
+BEGIN
+  UPDATE counters SET value = value + 1 WHERE name = row_name RETURNING value INTO new_val;
+  RETURN new_val;
+END;
+$$;
+
+-- Seed data: Categories
+INSERT INTO categories (name) VALUES
+  ('🍫 شيكولاتة'), ('🥜 مكسرات وبذور'), ('🌴 تمور ومعمول'), ('🥤 مشروبات غازية'),
+  ('⚡ مشروبات طاقة وعصائر'), ('🐻 جيلي وحلوى مطاطة'), ('🍪 بسكويت وكوكيز'),
+  ('🍬 حلوى وتوفي'), ('🍭 مصاصات وكاندي أطفال'), ('☕ قهوة وشاي'),
+  ('🥨 مقرمشات وشيبس'), ('🧇 حلوى شرقية ونوجا'), ('💧 مياه'),
+  ('🍇 فواكه مجففة وتين'), ('🎁 ألعاب وهدايا أطفال'), ('متنوعات');
+
+-- Seed data: Accounts (chart of accounts)
+INSERT INTO accounts (code, name, type, balance, description) VALUES
+  ('1-001', 'صندوق', 'أصول', 0, 'النقدية بالصندوق'),
+  ('1-002', 'بنك', 'أصول', 0, 'الحسابات البنكية'),
+  ('1-003', 'عملاء', 'أصول', 0, 'حسابات العملاء المدينة'),
+  ('1-004', 'المخزون', 'أصول', 0, 'قيمة البضاعة بالمخازن'),
+  ('2-001', 'موردون', 'خصوم', 0, 'حسابات الموردين الدائنة'),
+  ('2-002', 'قروض قصيرة الأجل', 'خصوم', 0, 'القروض والالتزامات قصيرة الأجل'),
+  ('3-001', 'رأس المال', 'حقوق ملكية', 0, 'رأس مال المنشأة'),
+  ('4-001', 'المبيعات', 'إيرادات', 0, 'إيرادات المبيعات'),
+  ('4-002', 'إيرادات أخرى', 'إيرادات', 0, 'إيرادات متنوعة'),
+  ('5-001', 'تكلفة البضاعة', 'مصروفات', 0, 'تكلفة المشتريات المباعة'),
+  ('5-002', 'مصروفات تشغيلية', 'مصروفات', 0, 'مصروفات الكهرباء والمياه والإيجار'),
+  ('5-003', 'رواتب', 'مصروفات', 0, 'رواتب الموظفين'),
+  ('5-004', 'إيجار', 'مصروفات', 0, 'إيجار المحل');
+
+-- Seed data: Notifications
+INSERT INTO notifications (title, message, type, "isRead", "createdAt")
+SELECT 'مرحباً بك في سستم بدر الدين', 'تم إعداد النظام بنجاح. يمكنك البدء في إضافة المنتجات والفواتير.', 'info', FALSE, now()::text
+WHERE NOT EXISTS (SELECT 1 FROM notifications);
+```
+
+---
+
+## قائمة الأشياء **الناقصة** في المشروع
+
+### 1. جداول SQL ناقصة من `supabase-setup.sql` (موجودة في Drizzle لكن مش موجودة في SQL)
+
+| الجدول | المكان |
+|--------|--------|
+| `pos_sessions` | `lib/db/src/schema/pos.ts:5` |
+| `pos_orders` | `lib/db/src/schema/pos.ts:16` |
+
+هذين الجدولين معرفين في Drizzle ORM لكن مش مضافين في ملف SQL setup.
+
+### 2. جداول SQL موجودة في setup.sql لكن **ناقصة من Drizzle Schema**
+
+| الجدول | مكانها في SQL |
+|--------|---------------|
+| `discounts` | `supabase-setup.sql:197` |
+| `counters` | `supabase-setup.sql:217` |
+| `settings` | `supabase-setup.sql:225` |
+| `journal_entries` | `supabase-setup.sql:161` |
+| دالة `increment_counter()` | `supabase-setup.sql:231` |
+
+ما في Drizzle schema files لهذه الجداول — فما تقدر تستخدم Drizzle ORM معاها.
+
+### 3. مشاكل عامة في قاعدة البيانات
+
+- **لا يوجد Indexes** — مافي `CREATE INDEX` على أي عمود (مثل `sku`, `barcode`, `invoiceNumber`, `phone`)
+- **لا يوجد RLS Policies** — مافي `ALTER TABLE ... ENABLE ROW LEVEL SECURITY` — قاعدة البيانات مفتوحة لكل مستخدم
+- **لا يوجد Foreign Keys للتقييد** — `discounts.bulkProductId` و `discounts.categoryId` معرفين كـ INTEGER بدون `REFERENCES`
+- **لا يوجد User/Auth System** — مافي جدول `users` أو `profiles` مرتبط بـ Supabase Auth لتحديد المستخدمين وصلاحياتهم
+- **أنواع TEXT للتواريخ** — `createdAt`, `date` مخزنة كنص (TEXT) بدل `TIMESTAMPTZ` — ما تقدر تعمل sorting صحيح أو queries زمنية
+- **أنواع TEXT للأرقام** — `unitPrice`, `costPrice`, `stock`, `amount`, `salary` مخزنة كنص (TEXT) بدل `NUMERIC` — مخاطرة لعمليات الحساب
+
+### 4. إعدادات البيئة الناقصة
+
+`.env` يحتوي فقط على Supabase keys:
+```
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=...
+VITE_SUPABASE_URL=...
+VITE_SUPABASE_PUBLISHABLE_KEY=...
+```
+
+**ناقص:** `DATABASE_URL` (مطلوب لـ `lib/db/src/index.ts` و `drizzle.config.ts`) و `PORT` (مطلوب لـ API server)
+
+### 5. API Routes موجودة لكن بعضها بدون SQL tables كاملة
+
+- **`routes/pos.ts`** — يستخدم `pos_sessions` و `pos_orders` (غير موجودين في SQL setup)
+- **`routes/dashboard.ts`** — يحتاج تجميع بيانات عبر جداول متعددة
+- **`routes/reports.ts`** — يحتاج queries تحليلية متقدمة
+
+### 6. أجزاء الفرونت أند بدون Backend API
+
+- **`Pages/Discounts.tsx`** — صفحة موجودة لكن مافي API route للـ `discounts`
+- **`Pages/InvoiceSettings.tsx`** — بيستخدم `settings` table (موجود في SQL لكن مش في Drizzle)
+- **`Pages/Journal.tsx`** — بيستخدم `journal_entries` table (موجود في SQL لكن مش في Drizzle)
+- **`Pages/Settings.tsx`** — بيستخدم `settings` table

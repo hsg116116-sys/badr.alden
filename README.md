@@ -1,0 +1,46 @@
+# 🥩 ملحمة النعيمي الفاخر (Al-Marah Asset Manager)
+
+[![Deploy to GitHub Pages](https://github.com/HSG116/almarah/actions/workflows/pages.yml/badge.svg)](https://github.com/HSG116/almarah/actions/workflows/pages.yml)
+
+تطبيق متكامل لإدارة الطلبات والمنتجات والموظفين لملحمة النعيمي الفاخر. يتميز بتجربة مستخدم فاخرة وتصميم عصري يدعم اللغة العربية بشكل كامل.
+
+## ✨ المميزات الرئيسية
+
+- 📱 **واجهة مستخدم عصرية**: تصميم متجاوب يعمل بامتياز على الجوال والحاسوب.
+- 🛍️ **متجر إلكتروني متكامل**: تصفح المنتجات، تفاصيل التقطيع والتغليف، وسلة مشتريات ذكية.
+- 👨‍🍳 **لوحة جزار متقدمة**: محطة تجهيز رقمية للجزارين لمتابعة الطلبات وتحديث المخزون.
+- 🚚 **نظام توصيل ذكي**: تتبع الطلبات وإسنادها للسائقين آلياً.
+- 💰 **لوحة محاسبة**: تقارير مالية ورسوم بيانية للأرباح والمبيعات.
+- 🔔 **إشعارات فورية**: نظام إشعارات لحظي عبر Supabase Realtime و Telegram Bot.
+- 🧾 **فواتير احترافية**: توليد فواتير ضريبية (ZATCA) قابلة للطباعة بتنسيقات متعددة (A4 و Thermal).
+
+## 🛠️ التقنيات المستخدمة
+
+- **Frontend**: React, Vite, TailwindCSS 4, Framer Motion, Radix UI, TanStack Query.
+- **Backend/Storage**: Supabase (Auth, Database, Realtime, Storage).
+- **Automation**: GitHub Actions for Continuous Deployment.
+- **Integration**: Node.js Express (for Telegram Bot and legacy support).
+
+## 🚀 التشغيل المحلي
+
+1. **تثبيت التبعيات**:
+   ```bash
+   npm install
+   ```
+
+2. **إعداد البيئة**:
+   قم بإنشاء ملف `.env` وأضف بيانات Supabase الخاصة بك:
+   ```env
+   VITE_SUPABASE_URL=your_url
+   VITE_SUPABASE_ANON_KEY=your_key
+   ```
+
+3. **بدء التطوير**:
+   ```bash
+   npm run dev
+   ```
+
+## 📜 سياسة الخصوصية والشروط
+التطبيق يتضمن صفحات قانونية متكاملة (سياسة الخصوصية، شروط الاستخدام، سياسة الاسترجاع) تضمن حقوق العميل والمتجر.
+
+

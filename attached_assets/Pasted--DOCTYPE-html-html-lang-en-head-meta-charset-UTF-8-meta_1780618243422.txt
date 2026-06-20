@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <title>سستم بدر الدين - نظام ERP</title>
+    <meta name="description" content="سستم بدر الدين - نظام ERP — built on Replit. Update this description to reflect the app." />
+    <meta name="robots" content="index, follow" />
+    <meta property="og:title" content="سستم بدر الدين - نظام ERP" />
+    <meta property="og:description" content="سستم بدر الدين - نظام ERP — built on Replit. Update this description to reflect the app." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="سستم بدر الدين - نظام ERP" />
+    <meta name="twitter:description" content="سستم بدر الدين - نظام ERP — built on Replit. Update this description to reflect the app." />
+    <link rel="icon" type="image/x-icon" href="/badr_logo.ico" />
+    <link rel="shortcut icon" href="/badr_logo.ico" />
+    <link rel="apple-touch-icon" href="/badr_logo.ico" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+
+    <!-- ضع هذا في آخر <body> في صفحة الكاشير -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+    (function() {
+      const SUPABASE_URL = 'https://ccvprapyetmkorblrkgw.supabase.co';
+      const SUPABASE_KEY = 'sb_publishable_FYWy-1ZaF3Ad8olmhPKZhg_wvRISriE';
+      const LOGO_URL = 'https://fe196c63-8176-46a9-a4ac-bc2ae737b2c1-00-3dzw1umf0vjgi.riker.replit.dev/logo.png';
+
+      // إنشاء client بشكل آمن
+      let supabase;
+      try {
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      } catch(e) {
+        console.error('❌ فشل تحميل Supabase:', e);
+        return;
+      }
+
+      // ── مؤشر حالة النظام ──────────────────────────────
+      const indicator = document.createElement('div');
+      indicator.id = 'badr-status';
+      indicator.style.cssText = `
+        position:fixed;bottom:12px;left:12px;z-index:999998;
+        background:#141414;border:1px solid #10b981;border-radius:8px;
+        padding:6px 12px;font-size:11px;color:#10b981;
+        font-family:system-ui,sans-serif;direction:rtl;
+      `;
+      indicator.textContent = '🟢 نظام الإشعارات جاهز';
+      document.body.appendChild(indicator);
+
+      // ── CSS ─────────────────────────────────────────────
+      const style = document.createElement('style');
+      style.textContent = `
+        #badr-notif-overlay {
+          position:fixed;top:0;left:0;right:0;z-index:999999;
+          display:flex;justify-content:center;
+          font-family:system-ui,sans-serif;direction:rtl;
+        }
+        #badr-notif-card {
+          background:#141414;border-bottom:3px solid #10b981;
+          border-left:1px solid rgba(255,255,255,0.08);
+          border-right:1px solid rgba(255,255,255,0.08);
+          border-radius:0 0 24px 24px;width:100%;max-width:680px;
+          box-shadow:0 20px 80px rgba(16,185,129,0.3);
+          animation:slideDown .4s cubic-bezier(.34,1.56,.64,1);
+        }
+        @keyframes slideDown{from{transform:translateY(-100%)}to{transform:translateY(0)}}
+        #badr-header{
+          background:linear-gradient(135deg,rgba(16,185,129,0.15),rgba(16,185,129,0.05));
+          padding:18px 24px;border-bottom:1px solid rgba(255,255,255,0.08);
+          display:flex;justify-content:space-between;align-items:center;
+        }
+        .badr-item-row{
+          background:#1c1c1c;border:1px solid rgba(255,255,255,0.07);
+          border-radius:12px;padding:10px 14px;margin-bottom:8px;
+          display:flex;justify-content:space-between;align-items:center;color:#fff;
+        }
+        #badr-accept{
+          flex:1;height:56px;border-radius:16px;border:none;cursor:pointer;
+          background:linear-gradient(135deg,#10b981,#059669);color:#fff;
+          font-size:18px;font-weight:900;
+          box-shadow:0 8px 24px rgba(16,185,129,0.4);
+        }
+        #badr-reject{
+          width:120px;height:56px;border-radius:16px;cursor:pointer;
+          background:rgba(239,68,68,0.12);color:#ef4444;
+          border:1px solid rgba(239,68,68,0.25);font-size:15px;font-weight:700;
+        }
+      `;
+      document.head.appendChild(style);
+
+      let countdown = 60, timer = null, currentNotif = null;
+      const seenIds = new Set();
+
+      function showNotification(n) {
+        if (seenIds.has(n.id)) return;
+        seenIds.add(n.id);
+        currentNotif = n;
+        countdown = 60;
+        document.getElementById('badr-notif-overlay')?.remove();
+
+        const items = (() => {
+          try { return typeof n.items === 'string' ? JSON.parse(n.items) : (n.items || []); }
+          catch(e) { return []; }
+        })();
+
+        const addrHtml = n.address && n.address !== 'غير محدد' ? `
+          <div style="background:#1c1c1c;border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:10px 14px;grid-column:span 2">
+            <p style="color:#6b7280;font-size:10px;margin:0 0 4px">📍 العنوان</p>
+            <p style="color:#fff;font-size:13px;font-weight:600;margin:0">${n.address}</p>
+          </div>` : '';
+
+        const overlay = document.createElement('div');
+        overlay.id = 'badr-notif-overlay';
+        overlay.innerHTML = `
+          <div id="badr-notif-card">
+            <div style="background:rgba(255,255,255,0.06)">
+              <div id="badr-progress" style="width:100%;height:4px;background:#10b981;transition:width 1s linear"></div>
+            </div>
+            <div id="badr-header">
+              <div style="display:flex;align-items:center;gap:14px">
+                <img src="${LOGO_URL}" alt="بدر الدين"
+                  style="width:52px;height:52px;border-radius:14px;border:2px solid #10b981;object-fit:contain;background:#fff"
+                  onerror="this.style.fontSize='32px';this.outerHTML='<div style=\\'font-size:32px;background:rgba(16,185,129,0.2);border:2px solid #10b981;border-radius:14px;width:52px;height:52px;display:flex;align-items:center;justify-content:center\\'>🛍️</div>'"
+                />
+                <div>
+                  <p style="color:#fff;font-size:20px;font-weight:900;margin:0">طلب جديد من الموقع!</p>
+                  <p style="color:#34d399;font-size:13px;margin:4px 0 0">🟢 يُستلم بواسطة: اسلام</p>
+                </div>
+              </div>
+              <div style="text-align:left">
+                <p style="color:#10b981;font-size:30px;font-weight:900;margin:0">${Math.round(n.total || 0)} <span style="font-size:14px">ج.م</span></p>
+                <p id="badr-countdown" style="color:#6b7280;font-size:12px;margin:4px 0 0">ينتهي خلال 60ث</p>
+              </div>
+            </div>
+            <div style="padding:14px 24px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div style="background:#1c1c1c;border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:10px 14px">
+                <p style="color:#6b7280;font-size:10px;margin:0 0 4px">👤 العميل</p>
+                <p style="color:#fff;font-size:13px;font-weight:600;margin:0">${n.customer_name || 'زبون'}</p>
+              </div>
+              <div style="background:#1c1c1c;border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:10px 14px">
+                <p style="color:#6b7280;font-size:10px;margin:0 0 4px">📞 الهاتف</p>
+                <p style="color:#fff;font-size:13px;font-weight:600;margin:0">${n.customer_phone || '—'}</p>
+              </div>
+              ${addrHtml}
+            </div>
+            <div style="padding:0 24px 14px">
+              <p style="color:#9ca3af;font-size:11px;font-weight:700;margin:0 0 8px">المنتجات (${items.length} عنصر)</p>
+              <div style="max-height:180px;overflow-y:auto">
+                ${items.map(function(item){ return '<div class="badr-item-row"><div style="display:flex;align-items:center;gap:10px"><span style="background:rgba(16,185,129,0.15);color:#10b981;border-radius:8px;padding:2px 8px;font-size:12px;font-weight:800">x' + item.quantity + '</span><span style="font-size:13px;font-weight:600">' + (item.name || item.productName || 'منتج') + '</span></div><span style="color:#34d399;font-weight:800;font-size:13px">' + Math.round((item.price||0)*(item.quantity||1)) + ' ج.م</span></div>'; }).join('')}
+              </div>
+            </div>
+            <div style="padding:12px 24px 24px;display:flex;gap:12px">
+              <button id="badr-accept" onclick="window._badrAccept()">✅ استلام الطلب</button>
+              <button id="badr-reject" onclick="window._badrReject()">❌ تجاهل</button>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(overlay);
+
+        try { new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play(); } catch(e){}
+
+        clearInterval(timer);
+        timer = setInterval(function() {
+          countdown--;
+          var el = document.getElementById('badr-countdown');
+          var pr = document.getElementById('badr-progress');
+          if (el) el.textContent = 'ينتهي خلال ' + countdown + 'ث';
+          if (pr) {
+            pr.style.width = ((countdown/60)*100) + '%';
+            pr.style.background = countdown > 30 ? '#10b981' : countdown > 15 ? '#f59e0b' : '#ef4444';
+          }
+          if (countdown <= 0) { clearInterval(timer); hideNotification(); }
+        }, 1000);
+      }
+
+      window._badrAccept = async function() {
+        if (!currentNotif) return;
+        var btn = document.getElementById('badr-accept');
+        if (btn) btn.textContent = '⏳ جاري الاستلام...';
+        await supabase.from('online_order_notifications').update({
+          status: 'accepted', cashier_id: 1,
+          accepted_by: 'اسلام', accepted_at: new Date().toISOString()
+        }).eq('id', currentNotif.id);
+        clearInterval(timer);
+        hideNotification();
+      };
+
+      window._badrReject = function() {
+        if (currentNotif) {
+          supabase.from('online_order_notifications')
+            .update({ status: 'rejected' }).eq('id', currentNotif.id);
+        }
+        clearInterval(timer);
+        hideNotification();
+      };
+
+      function hideNotification() {
+        var el = document.getElementById('badr-notif-overlay');
+        if (el) el.remove();
+        currentNotif = null;
+      }
+
+      // ── Polling كل 5 ثواني ─────────────────────────────
+      async function pollOrders() {
+        try {
+          var since = new Date(Date.now() - 60 * 60 * 1000).toISOString(); // آخر 60 دقيقة
+          var result = await supabase
+            .from('online_order_notifications')
+            .select('*')
+            .eq('status', 'pending')
+            .gte('created_at', since)
+            .order('created_at', { ascending: true });
+
+          if (result.error) {
+            indicator.textContent = '🔴 خطأ: ' + result.error.message;
+            indicator.style.borderColor = '#ef4444';
+            indicator.style.color = '#ef4444';
+            return;
+          }
+
+          var rows = result.data || [];
+          indicator.textContent = '🟢 متصل — طلبات معلقة: ' + rows.length;
+          rows.forEach(function(n) { showNotification(n); });
+        } catch(e) {
+          indicator.textContent = '🔴 استثناء: ' + e.message;
+        }
+      }
+
+      // ── Realtime ────────────────────────────────────────
+      supabase.channel('badr_orders_' + Date.now())
+        .on('postgres_changes', {
+          event: 'INSERT', schema: 'public',
+          table: 'online_order_notifications'
+        }, function(payload) {
+          if (payload.new && payload.new.status === 'pending') {
+            showNotification(payload.new);
+          }
+        })
+        .subscribe(function(status) {
+          console.log('Realtime:', status);
+          if (status === 'SUBSCRIBED') {
+            indicator.textContent = '🟢 متصل (Realtime + Polling)';
+          }
+        });
+
+      setInterval(pollOrders, 5000);
+      pollOrders();
+
+      console.log('✅ بدر الدين — نظام الإشعارات جاهز');
+    })();
+    </script>
+  </body>
+</html>

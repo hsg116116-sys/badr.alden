@@ -1,0 +1,105 @@
+(function(){
+  var SUPA_URL = 'https://ccvprapyetmkorblrkgw.supabase.co/rest/v1';
+  var SUPA_KEY = 'sb_publishable_FYWy-1ZaF3Ad8olmhPKZhg_wvRISriE';
+  var LOGO = '/badr_logo.ico';
+  var hdrs = { apikey: SUPA_KEY, Authorization: 'Bearer ' + SUPA_KEY, 'Content-Type': 'application/json' };
+
+  function supaFetch(method, path, body) {
+    return fetch(SUPA_URL + path, { method: method, headers: hdrs, body: body ? JSON.stringify(body) : undefined });
+  }
+
+  if (!document.getElementById('_badr_css')) {
+    var s = document.createElement('style');
+    s.id = '_badr_css';
+    s.textContent =
+      '#_badr_ov{position:fixed;top:0;left:0;right:0;z-index:2147483647;display:flex;justify-content:center;font-family:system-ui,sans-serif;direction:rtl}' +
+      '#_badr_card{background:#141414;border-bottom:3px solid #10b981;border-left:1px solid rgba(255,255,255,.08);border-right:1px solid rgba(255,255,255,.08);border-radius:0 0 24px 24px;width:100%;max-width:700px;box-shadow:0 20px 80px rgba(16,185,129,.3);animation:_badrSlide .4s cubic-bezier(.34,1.56,.64,1)}' +
+      '@keyframes _badrSlide{from{transform:translateY(-100%)}to{transform:translateY(0)}}' +
+      '._badr_cell{background:#1c1c1c;border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:10px 14px}' +
+      '._badr_item{background:#1c1c1c;border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:10px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;color:#fff}' +
+      '#_badr_acc{flex:1;height:56px;border-radius:16px;border:none;cursor:pointer;background:linear-gradient(135deg,#10b981,#059669);color:#fff;font-size:18px;font-weight:900;box-shadow:0 8px 24px rgba(16,185,129,.4)}' +
+      '#_badr_rej{width:120px;height:56px;border-radius:16px;cursor:pointer;background:rgba(239,68,68,.12);color:#ef4444;border:1px solid rgba(239,68,68,.25);font-size:15px;font-weight:700}' +
+      '';
+    document.head.appendChild(s);
+  }
+
+  
+
+  var curId = null, seen = {};
+
+  function showNotif(n) {
+    if (seen[n.id]) return;
+    seen[n.id] = 1; curId = n.id;
+    var items = [];
+    try { items = typeof n.items === 'string' ? JSON.parse(n.items) : (n.items || []); } catch(e){}
+
+    var subtotal = items.reduce(function(s, it){ return s + (it.price||0)*(it.quantity||1); }, 0);
+    var deliveryFee = Math.round((n.total||0) - subtotal);
+
+    var addr = (n.address && n.address !== 'غير محدد')
+      ? '<div class="_badr_cell" style="grid-column:span 2"><div style="color:#6b7280;font-size:10px;margin-bottom:4px">📍 العنوان</div><div style="color:#fff;font-size:13px;font-weight:600">' + n.address + '</div></div>' : '';
+
+    var iHtml = items.map(function(it){
+      var lineTotal = Math.round((it.price||0) * (it.quantity||1));
+      return '<div class="_badr_item"><div style="display:flex;align-items:center;gap:10px"><span style="background:rgba(16,185,129,.15);color:#10b981;border-radius:8px;padding:2px 8px;font-size:12px;font-weight:800">x' + it.quantity + '</span><span style="font-size:13px;font-weight:600">' + (it.name || 'منتج') + '</span></div><span style="color:#34d399;font-weight:800;font-size:13px">' + lineTotal + ' ج.م</span></div>';
+    }).join('');
+
+    var deliveryRow = deliveryFee > 0
+      ? '<div style="display:flex;justify-content:space-between;padding:6px 0;border-top:1px solid rgba(255,255,255,.06);margin-top:4px"><span style="color:#9ca3af;font-size:12px">رسوم التوصيل</span><span style="color:#f59e0b;font-size:12px;font-weight:700">' + deliveryFee + ' ج.م</span></div>' : '';
+
+    var old = document.getElementById('_badr_ov'); if (old) old.remove();
+    var ov = document.createElement('div'); ov.id = '_badr_ov';
+    ov.innerHTML = '<div id="_badr_card">' +
+      '<div style="background:linear-gradient(135deg,rgba(16,185,129,.15),rgba(16,185,129,.05));padding:18px 24px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;justify-content:space-between;align-items:center">' +
+        '<div style="display:flex;align-items:center;gap:14px">' +
+          '<img src="' + LOGO + '" style="width:52px;height:52px;border-radius:14px;border:2px solid #10b981;object-fit:contain;background:#fff" onerror="this.style.display=\'none\'">' +
+          '<div><p style="color:#fff;font-size:20px;font-weight:900;margin:0">طلب جديد من الموقع!</p><p style="color:#34d399;font-size:13px;margin:4px 0 0">🟢 يُستلم بواسطة: اسلام</p></div>' +
+        '</div>' +
+        '<div style="text-align:left"><p style="color:#10b981;font-size:30px;font-weight:900;margin:0">' + Math.round(n.total||0) + ' <span style="font-size:16px;font-weight:700">ج.م</span></p></div>' +
+      '</div>' +
+      '<div style="padding:14px 24px;display:grid;grid-template-columns:1fr 1fr;gap:10px">' +
+        '<div class="_badr_cell"><div style="color:#6b7280;font-size:10px;margin-bottom:4px">👤 العميل</div><div style="color:#fff;font-size:13px;font-weight:600">' + (n.customer_name||'زبون') + '</div></div>' +
+        '<div class="_badr_cell"><div style="color:#6b7280;font-size:10px;margin-bottom:4px">📞 الهاتف</div><div style="color:#fff;font-size:13px;font-weight:600">' + (n.customer_phone||'—') + '</div></div>' +
+        addr +
+      '</div>' +
+      '<div style="padding:0 24px 14px">' +
+        '<p style="color:#9ca3af;font-size:11px;font-weight:700;margin:0 0 8px">المنتجات (' + items.length + ' عنصر)</p>' +
+        '<div style="max-height:200px;overflow-y:auto">' + iHtml + '</div>' +
+        '<div style="margin-top:8px;border-top:1px solid rgba(255,255,255,.06);padding-top:8px">' +
+          '<div style="display:flex;justify-content:space-between;padding:4px 0"><span style="color:#9ca3af;font-size:12px">المجموع الفرعي</span><span style="color:#fff;font-size:12px;font-weight:700">' + Math.round(subtotal) + ' ج.م</span></div>' +
+          deliveryRow +
+          '<div style="display:flex;justify-content:space-between;padding:8px 0;border-top:2px solid #10b981;margin-top:6px"><span style="color:#10b981;font-size:14px;font-weight:900">الإجمالي</span><span style="color:#10b981;font-size:16px;font-weight:900">' + Math.round(n.total||0) + ' ج.م</span></div>' +
+        '</div>' +
+      '</div>' +
+      '<div style="padding:12px 24px 24px;display:flex;gap:12px"><button id="_badr_acc" onclick="_badrAcc()">✅ استلام الطلب</button><button id="_badr_rej" onclick="_badrRej()">❌ تجاهل</button></div>' +
+    '</div>';
+    document.body.appendChild(ov);
+    try { new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play(); } catch(e){}
+  }
+
+  function hideNotif() { var e = document.getElementById('_badr_ov'); if(e) e.remove(); curId = null; }
+
+  window._badrAcc = function() {
+    if (!curId) return;
+    var b = document.getElementById('_badr_acc'); if(b) b.textContent = '⏳ جاري الاستلام...';
+    supaFetch('PATCH', '/online_order_notifications?id=eq.' + curId, { status:'accepted', accepted_by:'اسلام', accepted_at: new Date().toISOString() });
+    hideNotif();
+  };
+  window._badrRej = function() {
+    if (curId) supaFetch('PATCH', '/online_order_notifications?id=eq.' + curId, { status:'rejected' });
+    hideNotif();
+  };
+
+  function poll() {
+    var since = new Date(Date.now() - 3*60*60*1000).toISOString();
+    fetch(SUPA_URL + '/online_order_notifications?status=eq.pending&created_at=gte.' + encodeURIComponent(since) + '&order=created_at.asc&select=*', { headers: hdrs })
+      .then(function(r){ return r.json(); })
+      .then(function(rows){
+        if (!Array.isArray(rows)) { return; }rows.forEach(showNotif);
+      }).catch(function(e){ });
+  }
+
+  poll();
+  setInterval(poll, 5000);
+  console.log('[بدر الدين] نظام الإشعارات جاهز');
+})();

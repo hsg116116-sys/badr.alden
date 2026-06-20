@@ -1,0 +1,79 @@
+uploads = []
+
+[[generated]]
+id = "PO6sH8bsyT4fCrUGF_3Jz"
+uri = "file://client/public/images/hero-banner.png"
+type = "image"
+title = "hero banner roastery"
+
+[[generated]]
+id = "ErcvqJzmLTXfsv7aDQ8H4"
+uri = "file://client/public/images/categories/chocolate.png"
+type = "image"
+title = "chocolate category"
+
+[[generated]]
+id = "AhQ4TKhSuwMKCDHzc9ix8"
+uri = "file://client/public/images/categories/nuts.png"
+type = "image"
+title = "nuts category"
+
+[[generated]]
+id = "_ZN6kJT-IDL9AenNJLg9Y"
+uri = "file://client/public/images/categories/dates.png"
+type = "image"
+title = "dates category"
+
+[[generated]]
+id = "ad7m7_eWkvcHbeHHJBOLn"
+uri = "file://client/public/images/categories/soda.png"
+type = "image"
+title = "soda category"
+
+[[generated]]
+id = "zb8dhMmyPFFmRPS-jxaEz"
+uri = "file://client/public/images/categories/energy.png"
+type = "image"
+title = "energy drinks category"
+
+[[generated]]
+id = "MT6WFnpPuyrotRpF5S_oG"
+uri = "file://client/public/images/categories/biscuits.png"
+type = "image"
+title = "biscuits category"
+
+[[generated]]
+id = "6jDv3EoWKhytkB2jXXUx-"
+uri = "file://client/public/images/categories/coffee.png"
+type = "image"
+title = "coffee tea category"
+
+[[generated]]
+id = "jhhPzGtRZlUsjKlV7_aKW"
+uri = "file://client/public/images/categories/chips.png"
+type = "image"
+title = "chips snacks category"
+
+[[generated]]
+id = "lo8_DwLlvZnRM-XIl_9Y7"
+uri = "file://client/public/images/categories/eastern_sweets.png"
+type = "image"
+title = "eastern sweets category"
+
+[[generated]]
+id = "R0ADy4rXae9TTTTqH3nhA"
+uri = "file://client/public/images/categories/jelly.png"
+type = "image"
+title = "jelly candy category"
+
+[[generated]]
+id = "aX3CdegAYR1wXrwpj5HQy"
+uri = "file://client/public/images/categories/toffee.png"
+type = "image"
+title = "toffee candy category"
+
+[[outputs]]
+id = "v4ykXyz0IZZB6pjfBtxyH"
+uri = "file://cashier-ai-prompt.md"
+type = "text"
+title = "SQL المحدّث + برومبت الكاشير"

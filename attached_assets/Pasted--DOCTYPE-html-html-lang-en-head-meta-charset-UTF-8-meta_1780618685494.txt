@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <title>سستم بدر الدين - نظام ERP</title>
+    <meta name="description" content="سستم بدر الدين - نظام ERP — built on Replit. Update this description to reflect the app." />
+    <meta name="robots" content="index, follow" />
+    <meta property="og:title" content="سستم بدر الدين - نظام ERP" />
+    <meta property="og:description" content="سستم بدر الدين - نظام ERP — built on Replit. Update this description to reflect the app." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="سستم بدر الدين - نظام ERP" />
+    <meta name="twitter:description" content="سستم بدر الدين - نظام ERP — built on Replit. Update this description to reflect the app." />
+    <link rel="icon" type="image/x-icon" href="/badr_logo.ico" />
+    <link rel="shortcut icon" href="/badr_logo.ico" />
+    <link rel="apple-touch-icon" href="/badr_logo.ico" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+
+    <!-- ضع هذا بدلاً منه في آخر <body> -->
+    <script>
+    (function(){
+      var URL  = 'https://ccvprapyetmkorblrkgw.supabase.co/rest/v1';
+      var KEY  = 'sb_publishable_FYWy-1ZaF3Ad8olmhPKZhg_wvRISriE';
+      var LOGO = 'https://fe196c63-8176-46a9-a4ac-bc2ae737b2c1-00-3dzw1umf0vjgi.riker.replit.dev/logo.png';
+
+      var headers = { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type': 'application/json' };
+
+      function api(method, path, body) {
+        return fetch(URL + path, { method: method, headers: headers, body: body ? JSON.stringify(body) : undefined });
+      }
+
+      /* ── CSS ── */
+      var s = document.createElement('style');
+      s.textContent = [
+        '#bn-overlay{position:fixed;top:0;left:0;right:0;z-index:2147483647;display:flex;justify-content:center;font-family:system-ui,sans-serif;direction:rtl}',
+        '#bn-card{background:#141414;border-bottom:3px solid #10b981;border-left:1px solid rgba(255,255,255,.08);border-right:1px solid rgba(255,255,255,.08);border-radius:0 0 24px 24px;width:100%;max-width:700px;box-shadow:0 20px 80px rgba(16,185,129,.3);animation:bnSlide .4s cubic-bezier(.34,1.56,.64,1)}',
+        '@keyframes bnSlide{from{transform:translateY(-100%)}to{transform:translateY(0)}}',
+        '.bn-cell{background:#1c1c1c;border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:10px 14px}',
+        '.bn-item{background:#1c1c1c;border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:10px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;color:#fff}',
+        '#bn-accept{flex:1;height:56px;border-radius:16px;border:none;cursor:pointer;background:linear-gradient(135deg,#10b981,#059669);color:#fff;font-size:18px;font-weight:900;box-shadow:0 8px 24px rgba(16,185,129,.4)}',
+        '#bn-reject{width:120px;height:56px;border-radius:16px;cursor:pointer;background:rgba(239,68,68,.12);color:#ef4444;border:1px solid rgba(239,68,68,.25);font-size:15px;font-weight:700}',
+        '#bn-status{position:fixed;bottom:12px;left:12px;z-index:2147483646;background:#141414;border:1px solid #10b981;border-radius:8px;padding:5px 12px;font-size:11px;color:#10b981;font-family:system-ui,sans-serif;direction:rtl}'
+      ].join('');
+      document.head.appendChild(s);
+
+      /* ── Status indicator ── */
+      var statusEl = document.createElement('div');
+      statusEl.id = 'bn-status';
+      statusEl.textContent = '🟡 جاري الاتصال...';
+      document.body.appendChild(statusEl);
+
+      var currentId = null, timer = null, countdown = 60;
+      var seenIds = {};
+
+      function setStatus(t, ok) {
+        statusEl.textContent = t;
+        statusEl.style.borderColor = ok === false ? '#ef4444' : '#10b981';
+        statusEl.style.color = ok === false ? '#ef4444' : '#10b981';
+      }
+
+      function showNotif(n) {
+        if (seenIds[n.id]) return;
+        seenIds[n.id] = 1;
+        currentId = n.id;
+        countdown = 60;
+
+        var items = [];
+        try { items = typeof n.items === 'string' ? JSON.parse(n.items) : (n.items || []); } catch(e){}
+
+        var addrRow = (n.address && n.address !== 'غير محدد')
+          ? '<div class="bn-cell" style="grid-column:span 2"><div style="color:#6b7280;font-size:10px;margin-bottom:4px">📍 العنوان</div><div style="color:#fff;font-size:13px;font-weight:600">' + n.address + '</div></div>'
+          : '';
+
+        var itemsHtml = items.map(function(it){
+          return '<div class="bn-item"><div style="display:flex;align-items:center;gap:10px"><span style="background:rgba(16,185,129,.15);color:#10b981;border-radius:8px;padding:2px 8px;font-size:12px;font-weight:800">x' + it.quantity + '</span><span style="font-size:13px;font-weight:600">' + (it.name || 'منتج') + '</span></div><span style="color:#34d399;font-weight:800;font-size:13px">' + Math.round((it.price||0)*(it.quantity||1)) + ' ج.م</span></div>';
+        }).join('');
+
+        var old = document.getElementById('bn-overlay');
+        if (old) old.remove();
+
+        var div = document.createElement('div');
+        div.id = 'bn-overlay';
+        div.innerHTML =
+          '<div id="bn-card">' +
+            '<div style="background:rgba(255,255,255,.06)"><div id="bn-prog" style="height:4px;background:#10b981;transition:width 1s linear;width:100%"></div></div>' +
+            '<div style="background:linear-gradient(135deg,rgba(16,185,129,.15),rgba(16,185,129,.05));padding:18px 24px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;justify-content:space-between;align-items:center">' +
+              '<div style="display:flex;align-items:center;gap:14px">' +
+                '<img src="' + LOGO + '" style="width:52px;height:52px;border-radius:14px;border:2px solid #10b981;object-fit:contain;background:#fff" onerror="this.outerHTML=\'<div style=&quot;font-size:32px;background:rgba(16,185,129,.2);border:2px solid #10b981;border-radius:14px;width:52px;height:52px;display:flex;align-items:center;justify-content:center&quot;>🛍️</div>\'">' +
+                '<div><p style="color:#fff;font-size:20px;font-weight:900;margin:0">طلب جديد من الموقع!</p><p style="color:#34d399;font-size:13px;margin:4px 0 0">🟢 يُستلم بواسطة: اسلام</p></div>' +
+              '</div>' +
+              '<div style="text-align:left"><p style="color:#10b981;font-size:30px;font-weight:900;margin:0">' + Math.round(n.total||0) + ' <span style="font-size:14px">ج.م</span></p><p id="bn-cd" style="color:#6b7280;font-size:12px;margin:4px 0 0">ينتهي خلال 60ث</p></div>' +
+            '</div>' +
+            '<div style="padding:14px 24px;display:grid;grid-template-columns:1fr 1fr;gap:10px">' +
+              '<div class="bn-cell"><div style="color:#6b7280;font-size:10px;margin-bottom:4px">👤 العميل</div><div style="color:#fff;font-size:13px;font-weight:600">' + (n.customer_name||'زبون') + '</div></div>' +
+              '<div class="bn-cell"><div style="color:#6b7280;font-size:10px;margin-bottom:4px">📞 الهاتف</div><div style="color:#fff;font-size:13px;font-weight:600">' + (n.customer_phone||'—') + '</div></div>' +
+              addrRow +
+            '</div>' +
+            '<div style="padding:0 24px 14px"><p style="color:#9ca3af;font-size:11px;font-weight:700;margin:0 0 8px">المنتجات (' + items.length + ' عنصر)</p><div style="max-height:180px;overflow-y:auto">' + itemsHtml + '</div></div>' +
+            '<div style="padding:12px 24px 24px;display:flex;gap:12px"><button id="bn-accept" onclick="_bnAccept()">✅ استلام الطلب</button><button id="bn-reject" onclick="_bnReject()">❌ تجاهل</button></div>' +
+          '</div>';
+        document.body.appendChild(div);
+
+        try { new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play(); } catch(e){}
+
+        clearInterval(timer);
+        timer = setInterval(function(){
+          countdown--;
+          var cd = document.getElementById('bn-cd'), pr = document.getElementById('bn-prog');
+          if (cd) cd.textContent = 'ينتهي خلال ' + countdown + 'ث';
+          if (pr) { pr.style.width = ((countdown/60)*100) + '%'; pr.style.background = countdown > 30 ? '#10b981' : countdown > 15 ? '#f59e0b' : '#ef4444'; }
+          if (countdown <= 0) { clearInterval(timer); hideNotif(); }
+        }, 1000);
+      }
+
+      function hideNotif() {
+        var el = document.getElementById('bn-overlay');
+        if (el) el.remove();
+        currentId = null;
+      }
+
+      window._bnAccept = function() {
+        if (!currentId) return;
+        var btn = document.getElementById('bn-accept');
+        if (btn) btn.textContent = '⏳ جاري الاستلام...';
+        api('PATCH', '/online_order_notifications?id=eq.' + currentId, { status: 'accepted', accepted_by: 'اسلام', accepted_at: new Date().toISOString() });
+        clearInterval(timer);
+        hideNotif();
+      };
+
+      window._bnReject = function() {
+        if (currentId) api('PATCH', '/online_order_notifications?id=eq.' + currentId, { status: 'rejected' });
+        clearInterval(timer);
+        hideNotif();
+      };
+
+      /* ── Polling ── */
+      function poll() {
+        var since = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString();
+        fetch(URL + '/online_order_notifications?status=eq.pending&created_at=gte.' + encodeURIComponent(since) + '&order=created_at.asc&select=*', { headers: headers })
+          .then(function(r){ return r.json(); })
+          .then(function(rows){
+            if (!Array.isArray(rows)) { setStatus('🔴 خطأ في البيانات', false); return; }
+            setStatus('🟢 متصل — طلبات معلقة: ' + rows.length, true);
+            rows.forEach(showNotif);
+          })
+          .catch(function(e){ setStatus('🔴 ' + e.message, false); });
+      }
+
+      poll();
+      setInterval(poll, 5000);
+    })();
+    </script>
+  </body>
+</html>
